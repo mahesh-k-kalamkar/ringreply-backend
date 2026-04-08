@@ -8,30 +8,36 @@ const axios = require("axios");
 router.post("/connect", auth, async (req, res) => {
   try {
     const response = await axios.post(
-      "https://gate.whapi.cloud/instances",
+      "https://gate.whapi.cloud/instances/new",
       {},
       {
         headers: {
-          Authorization: `Bearer ${process.env.WHAPI_TOKEN}`
-        }
+          Authorization: `Bearer ${process.env.WHAPI_TOKEN}`,
+        },
       }
     );
 
     const data = response.data;
 
-    // Save channel info
     await User.findByIdAndUpdate(req.user.id, {
       channelId: data.id,
-      whapiToken: data.token
+      whapiToken: data.token,
+      whapiStatus: "pending",
     });
 
     res.json({
-      message: "Session created",
-      channelId: data.id
+      success: true,
+      channelId: data.id,
+      qr: data.qr,          // if available
+      pairingCode: data.code // if available
     });
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err.response?.data || err.message);
+
+    res.status(500).json({
+      message: err.response?.data || err.message,
+    });
   }
 });
 
