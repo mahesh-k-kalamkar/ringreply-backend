@@ -42,3 +42,5 @@ router.get("/status", auth, async (req, res) => {
     status: user.whapiStatus || "disconnected"
   });
 });
+
+module.exports = router;
