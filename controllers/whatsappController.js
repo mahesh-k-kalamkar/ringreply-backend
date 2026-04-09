@@ -124,22 +124,23 @@ exports.sendCallReply = async (req, res) => {
     const to = caller_number.replace('+', '');
 
     // 🚀 CASE 1: MEDIA MESSAGE
-    if (media_url && media_type) {
-      const endpoint = media_type === "video"
-        ? "/messages/video"
-        : "/messages/image";
+    // 🚀 CASE 1: MEDIA MESSAGE
+if (media_url && media_type) {
+  const endpoint = media_type === "video"
+    ? "/messages/video"
+    : "/messages/image";
 
-      await axios.post(`${BASE_URL}${endpoint}`, {
-        to: to,
-        [media_type]: {
-          link: media_url,
-          caption: finalMessage
-        }
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+  await axios.post(`${BASE_URL}${endpoint}`, {
+    to: to,
+    caption: finalMessage,        // ← moved to TOP LEVEL
+    [media_type]: {
+      link: media_url             // ← only link inside the media object
     }
+  }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
     // 🚀 CASE 2: TEXT ONLY
     else {
       await axios.post(`${BASE_URL}/messages/text`, {
