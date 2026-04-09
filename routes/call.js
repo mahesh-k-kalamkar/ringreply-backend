@@ -7,6 +7,6 @@ const whatsappController = require('../controllers/whatsappController');
 router.use(auth);
 
 // Main endpoint for Android app (Call Detection)
-router.post('/trigger', whatsappController.sendCallReply);
+router.post('/sendCallReply', whatsappController.sendCallReply);
 
 module.exports = router;
