@@ -1,5 +1,6 @@
 const axios = require('axios');
 const WhatsAppSession = require('../models/WhatsAppSession');
+const User = require('../models/User');
 
 const BASE_URL = process.env.WHAPI_BASE_URL || 'https://gate.whapi.cloud';
 const MAIN_TOKEN = process.env.WHAPI_TOKEN;
@@ -43,7 +44,9 @@ exports.getQR = async (req, res) => {
     res.json(response.data);
   } catch (err) {
     console.error("QR Error:", err.response?.data || err.message);
-    res.status(500).json({ message: err.message });
+    const status = err.response?.status || 500;
+    const message = err.response?.data?.message || err.response?.data || err.message;
+    res.status(status).json({ message });
   }
 };
 
@@ -82,8 +85,8 @@ exports.getQR = async (req, res) => {
 
 exports.sendCallReply = async (req, res) => {
   try {
-    const { 
-      caller_number, 
+    const {
+      caller_number,
       call_type,
       message,
       website_url,
@@ -93,13 +96,23 @@ exports.sendCallReply = async (req, res) => {
 
     const userId = req.user.id;
 
-    const session = await WhatsAppSession.findOne({ 
-      user: userId, 
-      status: 'connected' 
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(401).json({ message: "Authenticated user not found" });
+    }
+
+    const session = await WhatsAppSession.findOne({
+      user: userId,
+      status: 'connected'
     });
 
     if (!session) {
       return res.status(400).json({ message: "No active WhatsApp session found" });
+    }
+
+    const token = user.whapiToken || MAIN_TOKEN;
+    if (!token) {
+      return res.status(500).json({ message: "Missing WhatsApp API token on server" });
     }
 
     // 🧩 Build final message
@@ -112,9 +125,8 @@ exports.sendCallReply = async (req, res) => {
 
     // 🚀 CASE 1: MEDIA MESSAGE
     if (media_url && media_type) {
-
-      const endpoint = media_type === "video" 
-        ? "/messages/video" 
+      const endpoint = media_type === "video"
+        ? "/messages/video"
         : "/messages/image";
 
       await axios.post(`${BASE_URL}${endpoint}`, {
@@ -124,17 +136,17 @@ exports.sendCallReply = async (req, res) => {
           caption: finalMessage
         }
       }, {
-        headers: { Authorization: `Bearer ${MAIN_TOKEN}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
-    } 
+    }
     // 🚀 CASE 2: TEXT ONLY
     else {
       await axios.post(`${BASE_URL}/messages/text`, {
         to: to,
         body: finalMessage
       }, {
-        headers: { Authorization: `Bearer ${MAIN_TOKEN}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
     }
 
