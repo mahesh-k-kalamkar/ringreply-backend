@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/whatsapp', require('./routes/whatsapp'));
-app.use('/api/call', require('./routes/call'));
+app.use('/api/whatsapp', require('./routes/call'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
